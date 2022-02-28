@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Subject } from 'src/subject/subject.entity';
 import { Student } from 'src/student/student.entity';
-import { Repository } from 'typeorm';
+import { FindCondition, FindConditions, Repository } from 'typeorm';
 import { CreateScoreDto } from './dto/create-score.dto';
 import { Score } from './score.entity';
 import { UpdateClassDto } from 'src/class/dto_class/update-class.dto';
@@ -20,22 +20,19 @@ export class ScoreService {
         return this.scoreRepository.find()
     }
 
-    async createScore({id,student,subject, ...createScoreDto} : CreateScoreDto){
+    async createScore({student,subject, ...createScoreDto} : CreateScoreDto){
         const newScore = {
             ...createScoreDto,
-            student : {id} as Student,
-            subject : {id} as Subject
+            student : {id: student} as Student,
+            subject : {id : subject} as Subject
         }
         return this.scoreRepository.save(newScore)
     }
 
-    async updateScore({id, student, subject, ...updateScoreDto}: UpdateScoreDto){
-        const newScore = {
-            ...updateScoreDto,
-            student : {id} as Student,
-            subject : {id} as Subject
-        }
-        await this.scoreRepository.update({id},newScore)
+    async updateScore({id, student , subject, score}: UpdateScoreDto){
+        return this.scoreRepository.update(
+            id ? { id } : ({ student, subject } as FindConditions<Score>), {score}
+        )
     }
 
     async deleteScore(param : DeleteScoreDto) {
