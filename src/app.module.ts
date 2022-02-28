@@ -29,7 +29,7 @@ import { Subject } from './subject/subject.entity';
       ScoreModule,
       SubjectModule,
   ],
-  controllers: [AppController, SubjectController],
-  providers: [AppService, SubjectService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

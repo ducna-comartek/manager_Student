@@ -18,11 +18,14 @@ export class SubjectService {
     }
 
     async createNewSubject(createSubjectDto : CreateSubjectDto){
-        await this.subjectRepository.save(createSubjectDto)
+        await this.subjectRepository.insert(createSubjectDto)
     }
 
-    async updateSubject({id, ...updateSubjectDto} : UpdateSubjectDto){
-        await this.subjectRepository.update({id}, updateSubjectDto)
+    async updateSubject({id, name, type} : UpdateSubjectDto){
+        if (id && name)
+            return this.subjectRepository.update({ id }, { name, type })
+        if (id && !name) return this.subjectRepository.update({ id }, { type })
+            return this.subjectRepository.update({ name }, { type })
     }
 
     async deleteSubject(param : DeleteSubjectDto){
