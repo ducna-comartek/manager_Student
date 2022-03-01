@@ -23,6 +23,7 @@ import { Subject } from './subject/subject.entity';
         database: 'manager_student',
         entities: [Class, Student,Score,Subject],
         synchronize: true,
+        logging:true
       }),
       StudentModule,
       ClassModule,

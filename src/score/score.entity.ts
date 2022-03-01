@@ -15,6 +15,8 @@ export class Score{
     @ManyToOne(() => Subject, subject => subject.id)
     subject : Subject
 
-    @Column()
+    @Column({
+        type : "float"
+    })
     score : number
 }

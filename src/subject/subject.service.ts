@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subject } from './subject.entity';
@@ -29,6 +29,17 @@ export class SubjectService {
     }
 
     async deleteSubject(param : DeleteSubjectDto){
-        await this.subjectRepository.delete(param)
+        try {
+            return await this.subjectRepository.delete(param)
+        } catch (error) {
+            if (error.driverError.code === 'ER_NO_REFERENCED_ROW_2') {
+                throw new HttpException({
+                    status: HttpStatus.BAD_REQUEST,
+                    error: ' Cannot delete or update a parent row: a foreign key constraint fails',
+                }, HttpStatus.BAD_REQUEST);
+            } else {
+                throw error;
+            }
+        }
     }
 }
