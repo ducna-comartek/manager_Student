@@ -10,7 +10,7 @@ export class Student{
     // @Column()
     id : number
 
-    @OneToMany(() => Score, score => score.id)
+    @OneToMany(() => Score, score => score.student)
     score : Score[]
 
     @Column()
