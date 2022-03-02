@@ -42,4 +42,8 @@ export class SubjectService {
             }
         }
     }
+
+    async findById(id : number){
+        return await this.subjectRepository.findOne(id)
+    }
 }

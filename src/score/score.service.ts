@@ -24,24 +24,12 @@ export class ScoreService {
     }
 
     async createScore({student,subject, ...createScoreDto} : CreateScoreDto){
-        try {
-            const newScore = {
-                ...createScoreDto,
-                student : {id: student} as Student,
-                subject : {id : subject} as Subject
-            }
+        const newScore = {
+            ...createScoreDto,
+            student : {id: student} as Student,
+            subject : {id : subject} as Subject
+        }
             return await this.scoreRepository.save(newScore)
-        } catch (error) {
-            console.log(error);
-            if(error.driverError.code === 'ER_NO_REFERENCED_ROW_2') {
-                throw new HttpException({
-                    status: HttpStatus.BAD_REQUEST,
-                    error: 'Cannot add a Score row',
-                }, HttpStatus.BAD_REQUEST);
-            } else {
-                throw error;
-            }
-        }         
     }
 
     async updateScore({id, student , subject, score}: UpdateScoreDto){
@@ -52,5 +40,9 @@ export class ScoreService {
 
     async deleteScore(param : DeleteScoreDto) {
         await this.scoreRepository.delete(param)
+    }
+
+    async getById(id : number){
+        return await this.scoreRepository.findOne(id)
     }
 }
