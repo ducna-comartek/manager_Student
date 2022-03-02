@@ -9,6 +9,8 @@ import { Student, TypeGender } from './student.entity';
 import {paginate, Pagination, IPaginationOptions} from 'nestjs-typeorm-paginate';
 import { from, map, Observable } from 'rxjs';
 import { Score } from 'src/score/score.entity';
+import { FindStudentDto } from './dto/find-student.dto';
+import { PaginateDto } from './dto/paginate-student.dto';
 
 @Injectable()
 export class StudentService {
@@ -26,26 +28,52 @@ export class StudentService {
     } 
 
     async createNewStudent({class: clss, ...createStudentDto} : CreateStudentDto) {
-        try {
-            const newStudent={
-                ...createStudentDto, 
-                class: {id: clss} as Class
-            }
-            return await this.studentsRepository.save(newStudent)
-        } catch (error) {
-            if (error.driverError.code === 'ER_NO_REFERENCED_ROW_2') {
-                throw new HttpException({
-                    status: HttpStatus.BAD_REQUEST,
-                    error: 'Cannot add a student row: a foreign key (classId) constraint fails',
-                }, HttpStatus.BAD_REQUEST);
-            } else {
-                throw error;
-            }
+        const newStudent={
+            ...createStudentDto, 
+            class: {id: clss} as Class
         }
-        
+        return await this.studentsRepository.save(newStudent)
+    
     }
 
-    public async isGoodStudent(){
+    public async resultScoreStudent (paginateDto : PaginateDto){
+        const limit = paginateDto.limit
+        const offset = paginateDto.offset
+        const typeOf = paginateDto.typeOf
+
+        return await this.studentsRepository
+        .createQueryBuilder('std')
+        .select(
+            [
+                "std.name",
+                "class.name",
+            ]
+        )
+        .leftJoin('std.class', 'class')
+        .leftJoinAndSelect(
+            subQuery => {
+                return subQuery
+                .select('studentId')
+                .addSelect('avg(score)', 'tb')
+                .addSelect(`case when avg(score) > 8 then 'Good' when avg(score) < 8 and avg(score) > 5 then 'Medium' else 'Bad' end`, 'result')
+                .from(Score, 'score')
+                .groupBy('studentId')
+            }, 'info', 'std.id = info.studentId'
+        )
+        .where('info.result = :typeOf', {typeOf : typeOf})
+        .orderBy('std.id')
+        .limit(limit)
+        .offset(offset)
+        .getRawMany()
+    }
+
+    public async isGoodStudent(paginateDto : PaginateDto){
+        // const take = query.take || 10
+        // const skip = query.skip || 0
+        // const keyword = query.keyword || ''
+        const limit = paginateDto.limit
+        const offset = paginateDto.offset
+
         return await this.studentsRepository
         .createQueryBuilder("std")
         .select(
@@ -67,8 +95,10 @@ export class StudentService {
         )
         // .groupBy("std.id")
         .where("min.minscore > :min", { min: 8 })
-        .getRawMany();
-    }
+        .limit(limit)
+        .offset(offset)
+        .getRawMany()
+       }
 
     async updateStudent({id, class : clss, ...updateStudentDto} : UpdateStudentDto ) {
         const newStudent = {
@@ -82,49 +112,13 @@ export class StudentService {
         await this.studentsRepository.delete(param)
     }
 
-    async findByName (name : Student) {
-        return await this.studentsRepository.findOne(name)
+    public async getByName(query: FindStudentDto) {
+        const student = await this.studentsRepository.findOne({ name: query.name })
+        return student
     }
 
-    // paginate(options: IPaginationOptions): Observable<Pagination<Student>> {
-    //     return from(paginate<Student>(this.studentsRepository, options)).pipe(
-    //         map((usersPageable: Pagination<Student>) => {
-    //             usersPageable.items.forEach(function (v) {delete v.name});
-    //             return usersPageable;
-    //         })
-    //     )
-    // }
-
-    // paginateFilterByUsername(options: IPaginationOptions, user: Student): Observable<Pagination<Student>>{
-    //     return from(this.studentsRepository.findAndCount({
-    //         skip: Number(options.page) * Number(options.limit) || 0,
-    //         take: Number(options.limit) || 10,
-    //         order: {id: "ASC"},
-    //         select: ['id', 'name', 'username', 'email', ''],
-    //         where: [
-    //             { name: Like(`%${user.name}%`)}
-    //         ]
-    //     })).pipe(
-    //         map(([users, totalUsers]) => {
-    //             const usersPageable: Pagination<Student> = {
-    //                 items: users,
-    //                 links: {
-    //                     first: options.route + `?limit=${options.limit}`,
-    //                     previous: options.route + ``,
-    //                     next: options.route + `?limit=${options.limit}&page=${Number(options.page) + 1}`,
-    //                     last: options.route + `?limit=${options.limit}&page=${Math.ceil(totalUsers / Number(options.limit))}`
-    //                 },
-    //                 meta: {
-    //                     currentPage: Number(options.page),
-    //                     itemCount: users.length,
-    //                     itemsPerPage: Number(options.limit),
-    //                     totalItems: totalUsers,
-    //                     totalPages: Math.ceil(totalUsers / Number(options.limit))
-    //                 }
-    //             };              
-    //             return usersPageable;
-    //         })
-    //     )
-    // }
+    async findById (id : number){
+        return await this.studentsRepository.findOne(id)
+    } 
 
 }

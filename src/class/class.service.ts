@@ -40,15 +40,15 @@ export class ClassService {
         await this.classRepository.delete(param)
     } 
 
-    public async getGoodStudents(){
-        return await this.classRepository
-            .createQueryBuilder('c')
-            .select()
-            .leftJoinAndSelect("c.student", "student")
-            .leftJoinAndSelect("student.score", "score")
-            .where("score.score > :score", {score : 8.5})
-            .getMany()
-    }
+    // public async getGoodStudents(){
+    //     return await this.classRepository
+    //         .createQueryBuilder('c')
+    //         .select()
+    //         .leftJoinAndSelect("c.student", "student")
+    //         .leftJoinAndSelect("student.score", "score")
+    //         .where("score.score > :score", {score : 8.5})
+    //         .getMany()
+    // }
 
     public async getStudentByName({name} : FindStudentInfoByNameDto){
         return await this.classRepository
@@ -67,6 +67,10 @@ export class ClassService {
         .leftJoinAndSelect("student.score", "score")
         .where("c.name = :n", {n : name })
         .getOne()
+    }
+
+    async findClassById(id : number){
+        return await this.classRepository.findOne(id)
     }
 
 }

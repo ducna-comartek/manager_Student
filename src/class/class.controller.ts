@@ -23,9 +23,9 @@ export class ClassController {
         return this.classService.findClass()
     }
 
-    @Get('goodStudent')
-    async getStudents(){
-        return this.classService.getGoodStudents()
+    @Get()
+    async findClassById(id : number){
+        return this.classService.findClassById(id)
     }
 
     @Patch()
