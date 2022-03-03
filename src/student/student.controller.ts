@@ -63,4 +63,14 @@ export class StudentController {
     async getByName(@Query() query: FindStudentDto) {
         return this.studentService.getByName(query);
     }
+
+    @Get('GetExcelStudentGood')
+    async getExcelStudentGood(){
+        return this.studentService.getExcelForStudentGood()
+    }
+
+    @Get('GetExcelTypeOfStudent')
+    async getExcelTypeOfStudent(){
+        return this.studentService.getExcelForTypeOfStudent()
+    }
 }

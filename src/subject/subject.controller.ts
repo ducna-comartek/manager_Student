@@ -35,4 +35,9 @@ export class SubjectController {
         return this.subjectService.findById(id)
     }
 
+    @Get('getexcel')
+    async getEcelToFile(){
+        return this.subjectService.getExecl()
+    }
+
 }

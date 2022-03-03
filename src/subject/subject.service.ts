@@ -5,6 +5,11 @@ import { Subject } from './subject.entity';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { DeleteSubjectDto } from './dto/delete-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
+import * as xlsx from 'xlsx';
+import * as XlsxTemplate from 'xlsx-template';
+import { json } from 'stream/consumers';
+import * as fs from 'fs';
+import path from 'path';
 
 @Injectable()
 export class SubjectService {
@@ -14,7 +19,35 @@ export class SubjectService {
     ){}
 
     async findAll() {
-        return this.subjectRepository.find()
+        const subject = await this.subjectRepository.find()
+        console.log(typeof(subject))
+        return subject
+    }
+
+    async getExecl(){
+        const subject_data = await this.subjectRepository.find()
+        const data = await fs.promises.readFile('./src/excel/test1.xlsx')
+        // console.log('1')
+        const template = new XlsxTemplate(data)
+        const sheetNumber = 1
+        
+        const values = {
+            score: subject_data
+        };
+        template.substitute(sheetNumber, values)
+        // template.substitute(sheetNumber, subject_data)
+        // const myData = template.
+        // console.log(typeof(myData))
+        fs.writeFileSync('./src/excel/test1.xlsx',template.generate('base64'),'base64')
+        return 'wirte complete'
+
+        // const file = xlsx.readFile('./src/excel/test1.xlsx')
+        // const subject_data = await this.subjectRepository.find()
+        // console.log(subject_data)
+        // const ws = xlsx.utils.json_to_sheet(subject_data)
+        // console.log(ws)
+        // xlsx.utils.book_append_sheet(file,ws,"cad")
+        // xlsx.writeFile(file,'./src/excel/test1.xlsx')
     }
 
     async createNewSubject(createSubjectDto : CreateSubjectDto){
