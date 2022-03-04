@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, StreamableFile } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subject } from './subject.entity';
@@ -27,27 +27,16 @@ export class SubjectService {
     async getExecl(){
         const subject_data = await this.subjectRepository.find()
         const data = await fs.promises.readFile('./src/excel/test1.xlsx')
-        // console.log('1')
         const template = new XlsxTemplate(data)
         const sheetNumber = 1
-        
         const values = {
-            score: subject_data
+            subject: subject_data 
         };
+        console.log(values)
         template.substitute(sheetNumber, values)
-        // template.substitute(sheetNumber, subject_data)
-        // const myData = template.
-        // console.log(typeof(myData))
-        fs.writeFileSync('./src/excel/test1.xlsx',template.generate('base64'),'base64')
-        return 'wirte complete'
-
-        // const file = xlsx.readFile('./src/excel/test1.xlsx')
-        // const subject_data = await this.subjectRepository.find()
-        // console.log(subject_data)
-        // const ws = xlsx.utils.json_to_sheet(subject_data)
-        // console.log(ws)
-        // xlsx.utils.book_append_sheet(file,ws,"cad")
-        // xlsx.writeFile(file,'./src/excel/test1.xlsx')
+        return new StreamableFile(
+            Buffer.from(template.generate('base64'), 'base64')
+        )
     }
 
     async createNewSubject(createSubjectDto : CreateSubjectDto){

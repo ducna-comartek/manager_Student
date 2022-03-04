@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, StreamableFile } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Class } from 'src/class/class.entity';
 import { Like, Repository } from 'typeorm';
@@ -11,6 +11,8 @@ import * as xlsx from 'xlsx';
 import { Score } from 'src/score/score.entity';
 import { FindStudentDto } from './dto/find-student.dto';
 import { PaginateDto } from './dto/paginate-student.dto';
+import * as fs from 'fs';
+import * as XlsxTemplate from 'xlsx-template';
 
 @Injectable()
 export class StudentService {
@@ -18,6 +20,7 @@ export class StudentService {
         @InjectRepository(Student)
         private studentsRepository : Repository<Student>
     ){}
+
 
     async searchAll() : Promise<Student[]>{
         return this.studentsRepository.find()
@@ -42,29 +45,29 @@ export class StudentService {
         const typeOf = paginateDto.typeOf
 
         return await this.studentsRepository
-        .createQueryBuilder('std')
-        .select(
-            [
-                "std.name",
-                "class.name",
-            ]
-        )
-        .leftJoin('std.class', 'class')
-        .leftJoinAndSelect(
-            subQuery => {
-                return subQuery
-                .select('studentId')
-                .addSelect('avg(score)', 'tb')
-                .addSelect(`case when avg(score) > 8 then 'Good' when avg(score) < 8 and avg(score) > 5 then 'Medium' else 'Bad' end`, 'result')
-                .from(Score, 'score')
-                .groupBy('studentId')
-            }, 'info', 'std.id = info.studentId'
-        )
-        .where('info.result = :typeOf', {typeOf : typeOf})
-        .orderBy('std.id')
-        .limit(limit)
-        .offset(offset)
-        .getRawMany()
+            .createQueryBuilder('std')
+            .select(
+                [
+                    "std.name",
+                    "class.name",
+                ]
+            )
+            .leftJoin('std.class', 'class')
+            .leftJoinAndSelect(
+                subQuery => {
+                    return subQuery
+                    .select('studentId')
+                    .addSelect('avg(score)', 'tb')
+                    .addSelect(`case when avg(score) > 8 then 'Good' when avg(score) < 8 and avg(score) > 5 then 'Medium' else 'Bad' end`, 'result')
+                    .from(Score, 'score')
+                    .groupBy('studentId')
+                }, 'info', 'std.id = info.studentId'
+            )
+            .where('info.result = :typeOf', {typeOf : typeOf})
+            .orderBy('std.id')
+            .limit(limit)
+            .offset(offset)
+            .getRawMany()
     }
 
     public async isGoodStudent(paginateDto : PaginateDto){
@@ -121,33 +124,39 @@ export class StudentService {
         return await this.studentsRepository.findOne(id)
     } 
 
-    async getExcelForStudentGood (){
-        const student_good = await this.studentsRepository
-            .createQueryBuilder("std")
+    async exportExcel (paginate : PaginateDto){
+        const typeOf = paginate.typeOf
+        const result = await this.studentsRepository
+            .createQueryBuilder('std')
             .select(
                 [
-                    "std.id",
                     "std.name",
                     "class.name",
                 ]
             )
-            .leftJoin("std.class", "class")
-            .leftJoin(
+            .leftJoin('std.class', 'class')
+            .leftJoinAndSelect(
                 subQuery => {
                     return subQuery
-                        .select("studentId")
-                        .addSelect("MIN(score)", "minscore")
-                        .from(Score, "s")
-                        .groupBy("studentId")
-                }, "min", "min.studentId = std.id"
+                    .select('studentId')
+                    .addSelect('avg(score)', 'tb')
+                    .addSelect(`case when avg(score) > 8 then 'Good' when avg(score) < 8 and avg(score) > 5 then 'Medium' else 'Bad' end`, 'result')
+                    .from(Score, 'score')
+                    .groupBy('studentId')
+                }, 'info', 'std.id = info.studentId'
             )
-            .where("min.minscore > :min", { min: 8 })
+            .where('info.result = :typeOf', {typeOf})
+            .orderBy('std.id')
             .getRawMany()
-       const file = xlsx.readFile('./src/excel/type_of_student.xlsx')
-       const ws = xlsx.utils.json_to_sheet(student_good)
-       xlsx.utils.book_append_sheet(file,ws,'Sheet3')
-       xlsx.writeFile(file,'./src/excel/type_of_student.xlsx')
-       return 'write excel succesfully'
+        const values = {
+            student : result 
+        }
+        const data = await fs.promises.readFile('./src/excel/test3.xlsx')
+        const template = new XlsxTemplate(data)
+        template.substitute(1, values)
+        return new StreamableFile(
+            Buffer.from(template.generate('base64'),'base64')
+        )
     }
 
     async getExcelForTypeOfStudent(){
@@ -172,11 +181,16 @@ export class StudentService {
             )
             .orderBy('std.id')
             .getRawMany()
-        const file = xlsx.readFile('./src/excel/type_of_student.xlsx')
-        const ws = xlsx.utils.json_to_sheet(typeOfStudent)
-        xlsx.utils.book_append_sheet(file,ws,"Sheet2")
-        xlsx.writeFile(file,'./src/excel/type_of_student.xlsx')
-        return 'write excel succesfully'
+        const values = {
+            student : typeOfStudent
+        }
+        // console.log(values)
+        const data = await fs.promises.readFile('./src/excel/test2.xlsx')
+        const template = new XlsxTemplate(data)
+        template.substitute(1, values)
+        return new StreamableFile(
+            Buffer.from(template.generate('base64'),'base64')
+        )    
     }
 
 }
