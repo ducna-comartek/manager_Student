@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, HttpException, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { query } from 'express';
 import { Observable } from 'rxjs';
 // import { Observable } from 'rxjs/internal/Observable';
@@ -65,11 +65,19 @@ export class StudentController {
     }
 
     @Get('GetExcelStudentGood')
-    async getExcelStudentGood(){
-        return this.studentService.getExcelForStudentGood()
+    @Header(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    async getExcelStudentGood(@Query() query : PaginateDto){
+        return this.studentService.exportExcel(query)
     }
 
     @Get('GetExcelTypeOfStudent')
+    @Header(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
     async getExcelTypeOfStudent(){
         return this.studentService.getExcelForTypeOfStudent()
     }

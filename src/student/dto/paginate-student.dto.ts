@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsString } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class PaginateDto {
     @IsNumber()
@@ -7,6 +7,7 @@ export class PaginateDto {
     @IsNumber()
     offset : number
 
+    @IsOptional()
     @IsEnum({
         GOOD: 'Good',
         MEDIUM: 'Medium',
