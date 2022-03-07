@@ -1,5 +1,5 @@
-import { Class } from "src/class/class.entity";
-import { Score } from "src/score/score.entity";
+import { Class } from "../class/class.entity";
+import { Score } from "../score/score.entity";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export type TypeGender = 'Male' | 'Female' | 'Other';

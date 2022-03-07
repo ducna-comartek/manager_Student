@@ -11,6 +11,7 @@ import { DeleteScoreDto } from './dto/delete-score.dto';
 import { response } from 'express';
 import { catchError, throwError } from 'rxjs';
 import { isBuffer } from 'util';
+import { HasScoreDto } from './dto/has_score.dto';
 
 @Injectable()
 export class ScoreService {
@@ -21,6 +22,38 @@ export class ScoreService {
 
     async findAll() {
         return this.scoreRepository.find()
+    }
+    public async hasScoreSubject(studentId: number) {
+        return await this.scoreRepository.count({ student: { id: studentId } as Student });
+    }
+
+    public async outcome(studentId: number) {
+        return await this.scoreRepository
+            .createQueryBuilder('score')
+            .select('score')
+            .leftJoinAndSelect('score.subject', 'subject')
+            .where('studentId = :id', { id: studentId })
+            .getRawMany();
+    }
+
+    public async avgScore(studentId: number) {
+        const info = await this.scoreRepository
+            .createQueryBuilder()
+            .addSelect('AVG(score)', 'avg')
+            .where('studentId = :id', { id: studentId })
+            .getRawOne();
+        return info.avg;
+    }
+    
+    public async hasScore(hasScoreDto: HasScoreDto) {
+        return await this.scoreRepository.findOne({
+            student: {
+                id: hasScoreDto.student
+            } as Student,
+            subject: {
+                id: hasScoreDto.subject
+            } as Subject
+        });
     }
 
     async createScore({student,subject, ...createScoreDto} : CreateScoreDto){

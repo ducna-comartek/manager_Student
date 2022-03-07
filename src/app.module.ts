@@ -5,32 +5,56 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { StudentModule } from './student/student.module';
 import { ClassModule } from './class/class.module';
 import { ScoreModule } from './score/score.module';
-import { SubjectService } from './subject/subject.service';
-import { SubjectController } from './subject/subject.controller';
 import { SubjectModule } from './subject/subject.module';
-import { Class } from './class/class.entity';
-import { Student } from './student/student.entity';
-import { Score } from './score/score.entity';
-import { Subject } from './subject/subject.entity';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DatabaseConfig } from './database.config';
+import { config } from './config';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { TransportType } from '@nestjs-modules/mailer/dist/interfaces/mailer-options.interface';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { MailModule } from './sendmail/mail.module';
+
+
 @Module({
   imports: [
-      TypeOrmModule.forRoot({
-        type: 'mysql',
-        host: 'localhost',
-        port: 3306,
-        username: 'root',
-        password: 'Anhduc123',
-        database: 'manager_student',
-        entities: [Class, Student,Score,Subject],
-        synchronize: true,
-        logging:true
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [config],
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useClass: DatabaseConfig,
+    }),
+    ClassModule,
+    SubjectModule,
+    ScoreModule,
+    StudentModule,
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('MAIL_HOST'),
+          secure: true,
+          requireTLS: true,
+          auth: {
+            user: configService.get<string>('MAIL_AUTH_USER'),
+            pass: configService.get<string>('MAIL_AUTH_PASS'),
+          },
+        } as TransportType,
+
+        template: {
+          dir: './src/templates',
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+          },
+        },
       }),
-      StudentModule,
-      ClassModule,
-      ScoreModule,
-      SubjectModule,
+      inject: [ConfigService],
+    }),
+    MailModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

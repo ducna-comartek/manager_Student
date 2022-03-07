@@ -64,6 +64,10 @@ export class SubjectService {
             }
         }
     }
+    
+    public async hasSubject(): Promise<number> {
+        return await this.subjectRepository.count();
+    }
 
     async findById(id : number){
         return await this.subjectRepository.findOne(id)

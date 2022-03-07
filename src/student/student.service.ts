@@ -38,6 +38,14 @@ export class StudentService {
         return await this.studentsRepository.save(newStudent)
     
     }
+    public async inClass(studentId: number) {
+        const _class = await this.studentsRepository
+            .createQueryBuilder('student')
+            .leftJoinAndSelect('student.class', 'class')
+            .where('student.id = :id', { id: studentId })
+            .getRawOne();
+        return _class.class_name
+    }
 
     public async resultScoreStudent (paginateDto : PaginateDto){
         const limit = paginateDto.limit
